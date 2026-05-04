@@ -75,7 +75,7 @@ Você não paga nada pela análise — o custo é do cliente.
 - `.xlsx` — Excel (recomendado)
 - `.csv` — valores separados por vírgula
 - `.tsv` — separados por tab
-- `.txt` — qualquer separador
+- `.txt` — qualquer separador.
 
 ---
 
