@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Nexus BI — Consultor Empresarial</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0c0f;--surface:#111318;--surface2:#181c23;--border:#1e2330;--border2:#2a3040;--text:#e8eaf0;--muted:#6b7280;--accent:#4f8ef7;--accent2:#7c5cfc;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.6;min-height:100vh}
+h1,h2,h3{font-family:'DM Serif Display',serif;line-height:1.2}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+/* Header */
+.header{border-bottom:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(10,12,15,0.95);backdrop-filter:blur(12px);z-index:100}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:17px}
+.logo-text{font-family:'DM Serif Display',serif;font-size:19px}
+.logo-sub{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+.hist-badge{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:5px 11px;font-size:12px;color:var(--muted);cursor:pointer}
+.hist-badge span{color:var(--accent);font-weight:600}
+/* Layout */
+.main{max-width:980px;margin:0 auto;padding:32px 18px 80px}
+/* Setup */
+.setup{max-width:540px;margin:44px auto 0;text-align:center}
+.setup-title{font-size:36px;margin-bottom:10px;background:linear-gradient(135deg,var(--text) 40%,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.setup-sub{color:var(--muted);font-size:15px;margin-bottom:32px;font-weight:300}
+.card-form{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;text-align:left}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:500px){.row2{grid-template-columns:1fr}}
+.field{margin-bottom:16px}
+.lbl{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:6px}
+.inp{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 13px;outline:none;transition:border-color .2s}
+.inp:focus{border-color:var(--accent)}.inp::placeholder{color:var(--muted)}
+.inp.mono{font-family:'DM Mono',monospace;font-size:13px}
+.sel{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 13px;outline:none;appearance:none;cursor:pointer;transition:border-color .2s}
+.sel:focus{border-color:var(--accent)}
+.upload-area{border:1.5px dashed var(--border2);border-radius:11px;padding:26px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)}
+.upload-area:hover,.upload-area.over{border-color:var(--accent);background:rgba(79,142,247,.04)}
+.upload-area.ok{border-color:var(--green);background:rgba(34,197,94,.04)}
+.upload-icon{font-size:26px;margin-bottom:6px}
+.upload-txt{color:var(--muted);font-size:13px}.upload-txt strong{color:var(--accent)}
+.divider{height:1px;background:var(--border);margin:18px 0}
+.btn-main{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;border:none;cursor:pointer;transition:all .18s}
+.btn-main:hover:not(:disabled){opacity:.88;transform:translateY(-1px)}.btn-main:disabled{opacity:.38;cursor:not-allowed}
+.btn-ghost{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;background:var(--surface2);color:var(--text);border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .18s}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.err{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:9px;padding:12px 16px;color:var(--red);font-size:13px;margin-bottom:16px}
+.hint{text-align:center;margin-top:10px;font-size:12px;color:var(--muted)}
+/* Loading */
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:22px}
+.ring{width:50px;height:50px;border:3px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .85s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.steps{display:flex;flex-direction:column;gap:8px}
+.step{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted);opacity:0;animation:fin .35s forwards}
+.step.on{color:var(--text)}.step .dot{width:6px;height:6px;border-radius:50%;background:var(--border2);flex-shrink:0}.step.on .dot{background:var(--accent)}
+@keyframes fin{from{opacity:0;transform:translateX(-7px)}to{opacity:1;transform:translateX(0)}}
+/* Dashboard */
+.dash{display:flex;flex-direction:column;gap:22px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.toolbar-left h2{font-size:22px}.toolbar-left p{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:3px}
+.company-tag{font-size:11px;color:var(--accent);background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);border-radius:5px;padding:2px 8px;font-weight:500;margin-top:4px;display:inline-block}
+/* Score */
+.score-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:26px 30px;display:flex;align-items:center;gap:26px;flex-wrap:wrap;position:relative;overflow:hidden}
+.score-card::before{content:'';position:absolute;top:-50px;right:-50px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(79,142,247,.07),transparent 70%)}
+.ring-wrap{position:relative;flex-shrink:0;width:100px;height:100px}.ring-wrap svg{width:100px;height:100px}
+.ring-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-val{font-family:'DM Serif Display',serif;font-size:30px;line-height:1}
+.ring-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+.score-info{flex:1;min-width:150px}
+.score-info h3{font-size:17px;margin-bottom:4px}
+.score-co{font-size:13px;color:var(--accent);font-weight:500;margin-bottom:3px}
+.score-period{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:9px}
+.score-pills{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 11px;border-radius:999px;font-size:12px;font-weight:500}
+.p-ok{background:rgba(34,197,94,.12);color:var(--green)}.p-warn{background:rgba(245,158,11,.12);color:var(--yellow)}.p-crit{background:rgba(239,68,68,.12);color:var(--red)}
+.trend-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--surface2);border:1px solid var(--border2)}
+.hist-bars{display:flex;gap:7px;align-items:flex-end;margin-left:auto}
+.hb-wrap{display:flex;flex-direction:column;align-items:center;gap:3px}
+.hb-track{width:22px;height:56px;background:var(--bg);border-radius:4px;display:flex;align-items:flex-end;overflow:hidden}
+.hb-fill{width:100%;border-radius:4px;transition:height .6s cubic-bezier(.22,.68,0,1.2)}
+.hb-lbl{font-size:8px;color:var(--muted);font-family:'DM Mono',monospace}
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px}
+.card-hd{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.card-ico{font-size:15px;width:32px;height:32px;background:var(--surface2);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.card-ttl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:600px){.grid2{grid-template-columns:1fr}.score-card{flex-direction:column}.hist-bars{margin-left:0}}
+p.body{font-size:13px;line-height:1.75}
+/* Metrics */
+.metrics{display:flex;gap:10px;flex-wrap:wrap}
+.mc{flex:1;min-width:100px;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:11px 13px}
+.mc-name{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.mc-val{font-family:'DM Serif Display',serif;font-size:19px}
+.mc-delta{font-size:10px;margin-top:2px;font-family:'DM Mono',monospace}
+.d-up{color:var(--green)}.d-dn{color:var(--red)}.d-fl{color:var(--muted)}
+/* Priorities */
+.plist{display:flex;flex-direction:column;gap:7px}
+.pi{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;border-radius:9px;background:var(--bg);border-left:3px solid transparent}
+.pi.s{border-left-color:var(--green)}.pi.a{border-left-color:var(--yellow)}.pi.c{border-left-color:var(--red)}
+.pbadge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 7px;border-radius:4px;flex-shrink:0;margin-top:2px}
+.bs{background:rgba(34,197,94,.15);color:var(--green)}.ba{background:rgba(245,158,11,.15);color:var(--yellow)}.bc{background:rgba(239,68,68,.15);color:var(--red)}
+.ptxt{font-size:12px;line-height:1.5}
+/* Insights */
+.ilist{display:flex;flex-direction:column;gap:11px}
+.ii{display:flex;gap:10px;align-items:flex-start}
+.inum{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);background:rgba(79,142,247,.1);width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.itxt{font-size:12px;line-height:1.6}
+/* Recs */
+.rlist{display:flex;flex-direction:column;gap:9px}
+.ri{display:flex;align-items:flex-start;gap:9px;padding:11px;border-radius:9px;background:var(--bg)}
+.rico{font-size:15px;flex-shrink:0;margin-top:1px}.rtxt{font-size:12px;line-height:1.6}
+/* Patterns */
+.patlist{display:flex;flex-direction:column;gap:7px}
+.patitem{padding:10px 12px;border-radius:9px;background:var(--bg);border:1px solid var(--border);font-size:12px;line-height:1.6}
+/* Alerts */
+.alert-list{display:flex;flex-direction:column;gap:8px}
+.alert-item{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:9px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.18)}
+.alert-ico{font-size:15px;flex-shrink:0}.alert-txt{font-size:12px;line-height:1.55}
+/* Projection */
+.proj-box{background:var(--bg);border:1px solid var(--border2);border-radius:10px;padding:14px 16px}
+.proj-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px}
+.proj-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+.proj-range{font-family:'DM Serif Display',serif;font-size:18px;color:var(--accent)}
+.proj-note{font-size:12px;color:var(--muted);line-height:1.55}
+/* Benchmarks */
+.bench-list{display:flex;flex-direction:column;gap:12px}
+.bench-item{display:flex;flex-direction:column;gap:5px}
+.bench-hd{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
+.bench-name{font-size:12px;color:var(--text)}
+.bench-vals{display:flex;gap:12px;font-family:'DM Mono',monospace;font-size:11px}
+.bench-bg{height:6px;background:var(--border2);border-radius:3px;overflow:hidden;position:relative}
+.bench-ref{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,.25)}
+.bench-fill{height:100%;border-radius:3px;transition:width .8s cubic-bezier(.22,.68,0,1.2)}
+/* Strategic question */
+.q-box{background:linear-gradient(135deg,rgba(79,142,247,.06),rgba(124,92,252,.06));border:1px solid rgba(79,142,247,.2);border-radius:14px;padding:22px 24px}
+.q-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--accent);margin-bottom:10px}
+.q-text{font-family:'DM Serif Display',serif;font-size:19px;line-height:1.45}
+.q-sub{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.55}
+/* Toast */
+.toast{position:fixed;bottom:22px;right:18px;background:var(--surface2);border:1px solid var(--border2);border-radius:9px;padding:10px 16px;font-size:13px;z-index:999;animation:tup .3s ease}
+@keyframes tup{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fade{opacity:0;animation:fadein .5s ease forwards}
+@keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.d1{animation-delay:.05s}.d2{animation-delay:.12s}.d3{animation-delay:.18s}.d4{animation-delay:.25s}.d5{animation-delay:.32s}.d6{animation-delay:.4s}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="logo">
+    <div class="logo-icon">◈</div>
+    <div><div class="logo-text">Nexus BI</div><div class="logo-sub">Consultor Empresarial</div></div>
+  </div>
+  <div id="hist-btn" style="display:none">
+    <div class="hist-badge" onclick="clearHistory()"><span id="hist-count">0</span> períodos · limpar</div>
+  </div>
+</header>
+
+<main class="main">
+  <!-- SETUP -->
+  <div id="screen-setup" class="setup">
+    <h1 class="setup-title">Diagnóstico<br/>Inteligente</h1>
+    <p class="setup-sub">Preencha os dados da empresa, envie a planilha<br/>e receba uma análise completa em segundos.</p>
+    <div class="card-form">
+      <div id="err-box" class="err" style="display:none"></div>
+
+      <!-- API Key -->
+      <div class="field">
+        <label class="lbl">Chave de API do Claude</label>
+        <input type="password" class="inp mono" id="api-key" placeholder="sk-ant-..."/>
+      </div>
+
+      <!-- Company + Sector -->
+      <div class="row2">
+        <div class="field">
+          <label class="lbl">Nome da Empresa</label>
+          <input type="text" class="inp" id="company-name" placeholder="Ex: Padaria Silva"/>
+        </div>
+        <div class="field">
+          <label class="lbl">Setor</label>
+          <select class="sel" id="sector">
+            <option value="">Selecione...</option>
+            <option value="Varejo">Varejo</option>
+            <option value="Alimentação e Restaurantes">Alimentação / Restaurantes</option>
+            <option value="Indústria e Manufatura">Indústria / Manufatura</option>
+            <option value="Serviços Profissionais">Serviços Profissionais</option>
+            <option value="Tecnologia e Software">Tecnologia / Software</option>
+            <option value="Saúde e Clínicas">Saúde / Clínicas</option>
+            <option value="Construção Civil">Construção Civil</option>
+            <option value="Agronegócio">Agronegócio</option>
+            <option value="Educação">Educação</option>
+            <option value="Logística e Transportes">Logística / Transportes</option>
+            <option value="E-commerce">E-commerce</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- File upload -->
+      <div class="field">
+        <label class="lbl">Planilha de Dados</label>
+        <div class="upload-area" id="drop-zone" onclick="document.getElementById('file-inp').click()">
+          <div class="upload-icon" id="upload-icon">📂</div>
+          <div class="upload-txt" id="upload-txt"><strong>Clique para selecionar</strong> ou arraste<br/><span style="font-size:11px">CSV, Excel (.xlsx), TSV ou TXT</span></div>
+        </div>
+        <input type="file" id="file-inp" accept=".csv,.xlsx,.xls,.tsv,.txt" style="display:none"/>
+      </div>
+
+      <div class="divider"></div>
+      <button class="btn-main" id="btn-analyze" onclick="startAnalysis()">✦ Gerar Análise Completa</button>
+      <p class="hint" id="hist-hint" style="display:none"></p>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="screen-loading" class="loading" style="display:none">
+    <div class="ring"></div>
+    <div>
+      <div id="loading-company" style="text-align:center;margin-bottom:6px;font-size:15px;font-family:'DM Serif Display',serif"></div>
+      <div style="text-align:center;margin-bottom:18px;color:var(--muted);font-size:13px">Analisando dados do negócio...</div>
+      <div class="steps" id="steps-list"></div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="screen-dash" style="display:none">
+    <div class="toolbar fade d1">
+      <div class="toolbar-left">
+        <h2 id="dash-title">Diagnóstico Empresarial</h2>
+        <p id="dash-period"></p>
+      </div>
+      <button class="btn-ghost" onclick="resetToSetup()">+ Nova Análise</button>
+    </div>
+    <div class="dash" id="dash-content"></div>
+  </div>
+</main>
+
+<div id="toast" class="toast" style="display:none"></div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────
+let selectedFile = null;
+let fileText = '';
+let history = [];
+try { history = JSON.parse(localStorage.getItem('nxbi_history') || '[]'); } catch {}
+
+const STEPS = [
+  'Lendo e interpretando a planilha...',
+  'Identificando métricas e indicadores...',
+  'Comparando com histórico anterior...',
+  'Gerando diagnóstico e alertas...',
+  'Calculando projeções e benchmarks do setor...',
+  'Formulando insights estratégicos...',
+];
+
+const SYS = `Você é um consultor empresarial sênior especializado em diagnóstico de negócios. Analise os dados fornecidos e retorne APENAS JSON válido (sem markdown, sem texto fora do JSON) com esta estrutura exata:
+{
+  "periodo": "string identificando o período dos dados",
+  "score": número inteiro 0-100 representando saúde geral,
+  "tendencia": "melhora" | "estavel" | "piora",
+  "status": "saudavel" | "atencao" | "critico",
+  "resumo_executivo": "3-5 linhas diretas sobre a situação da empresa",
+  "metricas": [{"nome":"string","valor":"string formatado","delta":"ex: +12% ou -5% ou =","direcao":"up"|"down"|"flat"}],
+  "situacao_atual": "parágrafo sobre o momento atual",
+  "prioridades": [{"nivel":"saudavel"|"atencao"|"critico","texto":"string"}],
+  "alertas": [{"texto":"alerta com gatilho numérico concreto"}],
+  "projecao": {"faixa_inferior":"string","faixa_superior":"string","descricao":"frase curta","base":"em que dado se baseia"},
+  "benchmarks": [{"indicador":"string","valor_empresa":"string","valor_setor":"string","percentual_empresa":0-100,"percentual_setor":0-100,"acima":true|false}],
+  "insights": ["string com insight estratégico"],
+  "recomendacoes": [{"icone":"emoji relevante","texto":"ação prática e direta"}],
+  "padroes": ["string descrevendo padrão ou tendência"],
+  "diagnostico": "parágrafo com o que funciona e o que não funciona",
+  "pergunta_estrategica": {"pergunta":"pergunta direta e provocativa para o gestor","contexto":"por que essa pergunta importa agora"}
+}`;
+
+// ── File reading ──────────────────────────────────────────────────────────
+document.getElementById('file-inp').addEventListener('change', e => {
+  const f = e.target.files[0]; if (f) handleFile(f);
+});
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('over'); const f = e.dataTransfer.files[0]; if (f) handleFile(f); });
+
+async function handleFile(f) {
+  selectedFile = f;
+  const ext = f.name.split('.').pop().toLowerCase();
+  try {
+    if (ext === 'xlsx' || ext === 'xls') {
+      fileText = await readExcel(f);
+    } else {
+      fileText = await readText(f);
+    }
+    dz.classList.add('ok');
+    document.getElementById('upload-icon').textContent = '✅';
+    document.getElementById('upload-txt').innerHTML = `<strong>${f.name}</strong><br/><span style="font-size:11px">${(f.size/1024).toFixed(1)} KB — clique para trocar</span>`;
+  } catch(e) {
+    showErr('Erro ao ler o arquivo: ' + e.message);
+  }
+}
+
+function readText(f) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result);
+    r.onerror = () => rej(new Error('Falha na leitura'));
+    r.readAsText(f, 'UTF-8');
+  });
+}
+
+function readExcel(f) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'binary' });
+        let csv = '';
+        wb.SheetNames.forEach(name => {
+          const ws = wb.Sheets[name];
+          csv += `[Aba: ${name}]\n` + XLSX.utils.sheet_to_csv(ws) + '\n\n';
+        });
+        res(csv);
+      } catch(err) { rej(err); }
+    };
+    r.onerror = () => rej(new Error('Falha na leitura do Excel'));
+    r.readAsBinaryString(f);
+  });
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────
+function show(id) { document.getElementById(id).style.display = ''; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+function showErr(m) { const b = document.getElementById('err-box'); b.textContent = '⚠ ' + m; b.style.display = ''; }
+function hideErr() { document.getElementById('err-box').style.display = 'none'; }
+function showToast(m) { const t = document.getElementById('toast'); t.textContent = '✓ ' + m; t.style.display = ''; setTimeout(() => t.style.display = 'none', 3000); }
+function saveHistory() { localStorage.setItem('nxbi_history', JSON.stringify(history)); }
+function clearHistory() { history = []; saveHistory(); updateBadge(); showToast('Histórico limpo.'); }
+function updateBadge() {
+  if (history.length > 0) {
+    show('hist-btn');
+    document.getElementById('hist-count').textContent = history.length;
+    document.getElementById('hist-hint').style.display = '';
+    document.getElementById('hist-hint').textContent = history.length + ' análise' + (history.length > 1 ? 's' : '') + ' anteriores usadas na comparação';
+    document.getElementById('btn-analyze').textContent = '✦ Analisar & Comparar com Histórico';
+  } else {
+    hide('hist-btn'); hide('hist-hint');
+    document.getElementById('btn-analyze').textContent = '✦ Gerar Análise Completa';
+  }
+}
+
+// ── API call ──────────────────────────────────────────────────────────────
+async function callAPI(apiKey, csvText, companyName, sector) {
+  const histCtx = history.length > 0
+    ? '\n\nHISTÓRICO (' + history.length + ' período(s) anteriores para comparação):\n' +
+      history.map((h, i) => 'P' + (i+1) + ': ' + h.periodo + ' — score: ' + h.score + ' — ' + h.status + '\nMétricas: ' + JSON.stringify(h.metricas)).join('\n\n')
+    : '\n\nPrimeira análise — sem histórico anterior.';
+
+  const prompt = `Empresa: ${companyName}
+Setor: ${sector}
+
+Use benchmarks reais e específicos do setor "${sector}" para comparação.
+Adapte toda a linguagem, métricas e recomendações ao contexto deste setor.
+
+DADOS DA PLANILHA:
+${csvText.slice(0, 9000)}
+${histCtx}
+${history.length > 0 ? '\nCompare com períodos anteriores. Calcule tendência real baseada nos dados.' : ''}
+
+Retorne APENAS o JSON. Nenhum texto fora do JSON.`;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4000,
+      system: SYS,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || 'Erro HTTP ' + res.status);
+  }
+  const data = await res.json();
+  const raw = data.content?.[0]?.text ?? '';
+  return JSON.parse(raw.replace(/```json|```/g, '').trim());
+}
+
+// ── Analysis flow ─────────────────────────────────────────────────────────
+async function startAnalysis() {
+  hideErr();
+  const apiKey = document.getElementById('api-key').value.trim();
+  const companyName = document.getElementById('company-name').value.trim();
+  const sector = document.getElementById('sector').value;
+
+  if (!apiKey) { showErr('Insira sua chave de API do Claude.'); return; }
+  if (!companyName) { showErr('Informe o nome da empresa.'); return; }
+  if (!sector) { showErr('Selecione o setor da empresa.'); return; }
+  if (!selectedFile) { showErr('Selecione uma planilha (CSV ou Excel).'); return; }
+
+  hide('screen-setup'); show('screen-loading');
+  document.getElementById('loading-company').textContent = companyName;
+
+  const sl = document.getElementById('steps-list');
+  sl.innerHTML = STEPS.map((s, i) => `<div class="step" id="st${i}" style="animation-delay:${i*.28}s"><div class="dot"></div>${s}</div>`).join('');
+  let si = 0;
+  const t = setInterval(() => { document.getElementById('st' + si)?.classList.add('on'); si++; if (si >= STEPS.length) clearInterval(t); }, 1400);
+
+  try {
+    const result = await callAPI(apiKey, fileText, companyName, sector);
+    result._companyName = companyName;
+    result._sector = sector;
+    clearInterval(t);
+    history = [...history, result].slice(-6);
+    saveHistory();
+    renderDashboard(result);
+    showToast('Análise concluída!');
+  } catch(e) {
+    clearInterval(t);
+    hide('screen-loading'); show('screen-setup');
+    showErr(e.message || 'Erro ao processar a análise.');
+  }
+}
+
+function resetToSetup() {
+  hide('screen-dash'); hide('screen-loading');
+  selectedFile = null; fileText = '';
+  dz.classList.remove('ok');
+  document.getElementById('upload-icon').textContent = '📂';
+  document.getElementById('upload-txt').innerHTML = '<strong>Clique para selecionar</strong> ou arraste<br/><span style="font-size:11px">CSV, Excel (.xlsx), TSV ou TXT</span>';
+  hideErr(); show('screen-setup'); updateBadge();
+}
+
+// ── Render helpers ────────────────────────────────────────────────────────
+function sc(s) { return s >= 70 ? 'var(--green)' : s >= 45 ? 'var(--yellow)' : 'var(--red)'; }
+function pc(s) { return s >= 70 ? 'p-ok' : s >= 45 ? 'p-warn' : 'p-crit'; }
+function pl(s) { return s >= 70 ? '✓ Saudável' : s >= 45 ? '⚠ Atenção' : '✕ Crítico'; }
+function ti(t) { return t === 'melhora' ? '↑' : t === 'piora' ? '↓' : '→'; }
+function tc(t) { return t === 'melhora' ? 'var(--green)' : t === 'piora' ? 'var(--red)' : 'var(--muted)'; }
+function tl(t) { return t === 'melhora' ? 'Em melhora' : t === 'piora' ? 'Em queda' : 'Estável'; }
+function lc(n) { return n === 'saudavel' ? 's' : n === 'atencao' ? 'a' : 'c'; }
+function bClass(n) { return n === 'saudavel' ? 'bs' : n === 'atencao' ? 'ba' : 'bc'; }
+function bLabel(n) { return n === 'saudavel' ? 'Saudável' : n === 'atencao' ? 'Atenção' : 'Crítico'; }
+function dc(d) { return d === 'up' ? 'd-up' : d === 'down' ? 'd-dn' : 'd-fl'; }
+function di(d) { return d === 'up' ? '▲' : d === 'down' ? '▼' : '─'; }
+
+function ringSVG(score) {
+  const sz = 100, st = 8, r = (sz - st*2)/2, ci = 2*Math.PI*r, off = ci - (score/100)*ci;
+  return `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}">
+    <circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="var(--border2)" stroke-width="${st}"/>
+    <circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${sc(score)}" stroke-width="${st}"
+      stroke-linecap="round" stroke-dasharray="${ci}" stroke-dashoffset="${off}"
+      transform="rotate(-90 ${sz/2} ${sz/2})" style="transition:stroke-dashoffset 1s"/>
+  </svg>`;
+}
+
+function histBarsHTML(cur) {
+  const prev = history.slice(-4, -1);
+  const all = [...prev, cur];
+  if (all.length < 2) return '';
+  return '<div class="hist-bars">' + all.map((h, i) => {
+    const iL = i === all.length - 1;
+    const pct = (h.score / 100) * 56;
+    const col = sc(h.score);
+    return `<div class="hb-wrap">
+      <div class="hb-track"><div class="hb-fill" style="height:${pct}px;background:${col};opacity:${iL?1:.4}"></div></div>
+      <div class="hb-lbl" style="color:${iL?col:''}">${(h.periodo||'P'+(i+1)).slice(0,6)}</div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+function renderDashboard(s) {
+  hide('screen-loading');
+  const co = s._companyName || '';
+  const sec = s._sector || '';
+  const trend = s.tendencia || 'estavel';
+  const proj = s.projecao || {};
+  const q = s.pergunta_estrategica || {};
+
+  document.getElementById('dash-title').textContent = 'Diagnóstico — ' + co;
+  document.getElementById('dash-period').textContent = 'Período: ' + s.periodo + ' · ' + sec;
+
+  const html = `
+  <!-- Score -->
+  <div class="score-card fade d2">
+    <div class="ring-wrap">${ringSVG(s.score)}<div class="ring-num"><span class="ring-val" style="color:${sc(s.score)}">${s.score}</span><span class="ring-lbl">score</span></div></div>
+    <div class="score-info">
+      <h3>Saúde Geral do Negócio</h3>
+      <div class="score-co">${co} · ${sec}</div>
+      <div class="score-period">${s.periodo}</div>
+      <div class="score-pills">
+        <span class="pill ${pc(s.score)}">${pl(s.score)}</span>
+        <span class="trend-pill" style="color:${tc(trend)}">${ti(trend)} ${tl(trend)}</span>
+      </div>
+    </div>
+    ${histBarsHTML(s)}
+  </div>
+
+  <!-- Resumo -->
+  <div class="card fade d2"><div class="card-hd"><div class="card-ico">📋</div><div class="card-ttl">Resumo Executivo</div></div><p class="body">${s.resumo_executivo}</p></div>
+
+  <!-- Métricas -->
+  ${(s.metricas||[]).length ? `<div class="card fade d3"><div class="card-hd"><div class="card-ico">📊</div><div class="card-ttl">Principais Métricas</div></div><div class="metrics">${(s.metricas||[]).map(m=>`<div class="mc"><div class="mc-name">${m.nome}</div><div class="mc-val">${m.valor}</div><div class="mc-delta ${dc(m.direcao)}">${di(m.direcao)} ${m.delta}</div></div>`).join('')}</div></div>` : ''}
+
+  <!-- Projeção -->
+  <div class="card fade d3">
+    <div class="card-hd"><div class="card-ico">🔮</div><div class="card-ttl">Projeção — Próximo Período</div></div>
+    <div class="proj-box">
+      <div class="proj-row"><span class="proj-lbl">Faixa projetada</span><span class="proj-range">${proj.faixa_inferior||'—'} → ${proj.faixa_superior||'—'}</span></div>
+      <p class="proj-note">${proj.descricao||''} <span style="opacity:.6">Base: ${proj.base||'tendência histórica'}</span></p>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card fade d3"><div class="card-hd"><div class="card-ico">🔍</div><div class="card-ttl">Situação Atual</div></div><p class="body">${s.situacao_atual}</p></div>
+    <div class="card fade d3"><div class="card-hd"><div class="card-ico">🩺</div><div class="card-ttl">Diagnóstico</div></div><p class="body">${s.diagnostico}</p></div>
+
+    ${(s.alertas||[]).length ? `<div class="card fade d4"><div class="card-hd"><div class="card-ico">🚨</div><div class="card-ttl">Alertas com Gatilhos</div></div><div class="alert-list">${(s.alertas||[]).map(a=>`<div class="alert-item"><span class="alert-ico">⚠️</span><span class="alert-txt">${a.texto}</span></div>`).join('')}</div></div>` : ''}
+
+    <div class="card fade d4"><div class="card-hd"><div class="card-ico">⚡</div><div class="card-ttl">Pontos Classificados</div></div><div class="plist">${(s.prioridades||[]).map(p=>`<div class="pi ${lc(p.nivel)}"><span class="pbadge ${bClass(p.nivel)}">${bLabel(p.nivel)}</span><span class="ptxt">${p.texto}</span></div>`).join('')}</div></div>
+
+    ${(s.benchmarks||[]).length ? `<div class="card fade d4"><div class="card-hd"><div class="card-ico">🏁</div><div class="card-ttl">Comparativo — Setor: ${sec}</div></div><div class="bench-list">${(s.benchmarks||[]).map(b=>`<div class="bench-item"><div class="bench-hd"><span class="bench-name">${b.indicador}</span><div class="bench-vals"><span style="color:${b.acima?'var(--green)':'var(--red)'}">Empresa: ${b.valor_empresa}</span><span style="color:var(--muted)">Setor: ${b.valor_setor}</span></div></div><div class="bench-bg"><div class="bench-ref" style="left:${b.percentual_setor}%"></div><div class="bench-fill" style="width:${b.percentual_empresa}%;background:${b.acima?'var(--green)':'var(--red)'}"></div></div></div>`).join('')}</div></div>` : ''}
+
+    <div class="card fade d5"><div class="card-hd"><div class="card-ico">💡</div><div class="card-ttl">Insights Estratégicos</div></div><div class="ilist">${(s.insights||[]).map((ins,i)=>`<div class="ii"><div class="inum">${i+1}</div><p class="itxt">${ins}</p></div>`).join('')}</div></div>
+
+    ${(s.padroes||[]).length ? `<div class="card fade d5"><div class="card-hd"><div class="card-ico">📈</div><div class="card-ttl">Padrões & Tendências</div></div><div class="patlist">${(s.padroes||[]).map(p=>`<div class="patitem"><span style="color:var(--accent);margin-right:7px">→</span>${p}</div>`).join('')}</div></div>` : ''}
+
+    <div class="card fade d5"><div class="card-hd"><div class="card-ico">🎯</div><div class="card-ttl">Recomendações</div></div><div class="rlist">${(s.recomendacoes||[]).map(r=>`<div class="ri"><span class="rico">${r.icone}</span><p class="rtxt">${r.texto}</p></div>`).join('')}</div></div>
+  </div>
+
+  <!-- Pergunta estratégica -->
+  <div class="q-box fade d6">
+    <div class="q-label">💬 Pergunta estratégica do período</div>
+    <div class="q-text">${q.pergunta||''}</div>
+    <p class="q-sub">${q.contexto||''}</p>
+  </div>`;
+
+  document.getElementById('dash-content').innerHTML = html;
+  show('screen-dash'); updateBadge();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+updateBadge();
+const sk = localStorage.getItem('nxbi_key');
+if (sk) document.getElementById('api-key').value = sk;
+document.getElementById('api-key').addEventListener('input', e => localStorage.setItem('nxbi_key', e.target.value));
+const sn = localStorage.getItem('nxbi_company');
+if (sn) document.getElementById('company-name').value = sn;
+document.getElementById('company-name').addEventListener('input', e => localStorage.setItem('nxbi_company', e.target.value));
+const ss = localStorage.getItem('nxbi_sector');
+if (ss) document.getElementById('sector').value = ss;
+document.getElementById('sector').addEventListener('change', e => localStorage.setItem('nxbi_sector', e.target.value));
+</script>
+</body>
+</html>
