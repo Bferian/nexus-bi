@@ -2,10 +2,11 @@ name: Build & Deploy Nexus BI
 on:
   push:
     branches: [main]
+
 jobs:
-  # ── Deploy link mobile (GitHub Pages) ────────────────────────────────────
+
   deploy-web:
-    name: 🌐 Deploy Web (Link Mobile)
+    name: Deploy Web (Link Mobile)
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -20,32 +21,83 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./web-deploy
-  # ── Build Windows .exe ────────────────────────────────────────────────────
+
   build-windows:
-    name: 🖥️ Build Windows (.exe)
+    name: Build Windows (.exe)
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Instalar dependências
+      - name: Instalar dependencias
         run: npm install
       - name: Build web assets
         run: npm run build
-      - name: Gerar instalador .exe
+      - name: Gerar instalador exe
         run: npx electron-builder --win --publish never
-      - name: Upload .exe
+      - name: Upload exe
         uses: actions/upload-artifact@v4
         with:
           name: NexusBI-Windows
           path: dist-electron/*.exe
           retention-days: 30
-  # ── Build macOS .dmg ──────────────────────────────────────────────────────
+
   build-mac:
-    name: 🍎 Build macOS (.dmg)
+    name: Build macOS (.dmg)
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
+          node-version: 20
+      - name: Instalar dependencias
+        run: npm install
+      - name: Build web assets
+        run: npm run build
+      - name: Gerar instalador dmg
+        run: npx electron-builder --mac --publish never
+      - name: Upload dmg
+        uses: actions/upload-artifact@v4
+        with:
+          name: NexusBI-macOS
+          path: dist-electron/*.dmg
+          retention-days: 30
+
+  release:
+    name: Criar Release
+    needs: [build-windows, build-mac]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Windows
+        uses: actions/download-artifact@v4
+        with:
+          name: NexusBI-Windows
+          path: ./release/windows
+      - name: Download macOS
+        uses: actions/download-artifact@v4
+        with:
+          name: NexusBI-macOS
+          path: ./release/mac
+      - name: Criar Release no GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Nexus BI v${{ github.run_number }}
+          body: |
+            ## Nexus BI - Consultor Empresarial Inteligente
+
+            ### Downloads
+            - Windows: Baixe o .exe abaixo e instale normalmente
+            - Mac: Baixe o .dmg abaixo e instale normalmente
+            - Celular: Acesse o link abaixo no Chrome
+
+            ### Link Mobile
+            https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+          files: |
+            ./release/windows/*.exe
+            ./release/mac/*.dmg
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
