@@ -32,8 +32,6 @@ jobs:
           node-version: 20
       - name: Instalar dependencias
         run: npm install
-      - name: Build web assets
-        run: npm run build
       - name: Gerar instalador exe
         run: npx electron-builder --win --publish never
       - name: Upload exe
@@ -53,8 +51,6 @@ jobs:
           node-version: 20
       - name: Instalar dependencias
         run: npm install
-      - name: Build web assets
-        run: npm run build
       - name: Gerar instalador dmg
         run: npx electron-builder --mac --publish never
       - name: Upload dmg
